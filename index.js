@@ -1,5 +1,38 @@
 const express = require('express');   //importing express
-const app = express();                 //creating app using express module
+const session= require('express-session') //importing session
+const dataService = require('./Service/data.service.js'); //importing data.service.js file
+const app = express();                   //creating app using express module
+app.use(express.json());              //parsing json
+
+app.use(session ({                   //session creation in our application
+    secret:'randomsecurestring',
+    resave:'false',                   //only modified data will save
+    saveUninitialized:'false'     //not saving unintialized value
+}));
+
+app.use((req,res,next)=>{      //middle ware
+console.log("middleware");
+next()                       //call next request
+});
+
+const logMiddleware=(req,res,next)=>{
+    console.log(req.body);
+    next();
+}
+app.use(logMiddleware);
+
+const authMiddleware=(req,res,next)=>{
+    if(!req.session.currentUser) {
+        return res.json({                //converting to json
+          statusCode:401,
+          status:false,
+          message:"Please login"
+        });
+      }
+      else{
+          next();
+      }
+}
 
 //GET- read
 app.get('/', (req, res) => {
@@ -9,6 +42,25 @@ app.get('/', (req, res) => {
 //POST-CREATE
 app.post('/', (req, res) => {
     res.send("This is a POST method");
+});
+app.post('/register',(req,res)=>{
+    const result= dataService.register(req.body.uname,req.body.accno,req.body.pswd);
+    res.status(result.statusCode).json(result);
+
+});
+app.post('/login',(req,res)=>{
+    const result=dataService.login(req,req.body.accno,req.body.pswd);
+    res.status(result.statusCode).json(result);
+});
+
+app.post('/deposit',authMiddleware,(req,res)=>{
+    console.log(req.session.currentUser);           //currentUser of login
+    const result=dataService.deposit(req.body.accno,req.body.pswd,req.body.amount);
+    res.status(result.statusCode).json(result);
+});
+app.post('/withdraw',authMiddleware,(req,res)=>{
+    const result=dataService.withdraw(req.body.accno,req.body.pswd,req.body.amount);
+    res.status(result.statusCode).json(result);
 });
 
 //PUT -Update/modify whole
