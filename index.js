@@ -44,13 +44,18 @@ app.post('/', (req, res) => {
     res.send("This is a POST method");
 });
 app.post('/register',(req,res)=>{
-    const result= dataService.register(req.body.uname,req.body.accno,req.body.pswd);
-    res.status(result.statusCode).json(result);
+    dataService.register(req.body.uname,req.body.accno,req.body.pswd)  //asychronus action
+    .then(result=>{
+        res.status(result.statusCode).json(result);
+    })
+    
 
 });
 app.post('/login',(req,res)=>{
-    const result=dataService.login(req,req.body.accno,req.body.pswd);
+    dataService.login(req,req.body.accno,req.body.pswd) //asychronus action ..no semicolon at end
+    .then(result=>{
     res.status(result.statusCode).json(result);
+})
 });
 
 app.post('/deposit',authMiddleware,(req,res)=>{
