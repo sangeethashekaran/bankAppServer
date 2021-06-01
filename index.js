@@ -15,13 +15,13 @@ console.log("middleware");
 next()                       //call next request
 });
 
-const logMiddleware=(req,res,next)=>{
+const logMiddleware=(req,res,next)=>{   //global
     console.log(req.body);
     next();
 }
 app.use(logMiddleware);
 
-const authMiddleware=(req,res,next)=>{
+const authMiddleware=(req,res,next)=>{    //used in deposit nd withdraw
     if(!req.session.currentUser) {
         return res.json({                //converting to json
           statusCode:401,
@@ -60,12 +60,17 @@ app.post('/login',(req,res)=>{
 
 app.post('/deposit',authMiddleware,(req,res)=>{
     console.log(req.session.currentUser);           //currentUser of login
-    const result=dataService.deposit(req.body.accno,req.body.pswd,req.body.amount);
+    dataService.deposit(req.body.accno,req.body.pswd,req.body.amount) //asychrons action
+    .then(result=>{
     res.status(result.statusCode).json(result);
+    })
 });
 app.post('/withdraw',authMiddleware,(req,res)=>{
-    const result=dataService.withdraw(req.body.accno,req.body.pswd,req.body.amount);
-    res.status(result.statusCode).json(result);
+    dataService.withdraw(req.body.accno,req.body.pswd,req.body.amount) //asychronus
+    .then(result=>{
+        res.status(result.statusCode).json(result);
+    })
+    
 });
 
 //PUT -Update/modify whole
