@@ -1,8 +1,15 @@
 const express = require('express');   //importing express
 const session= require('express-session') //importing session
+const cors = require('cors');
 const dataService = require('./Service/data.service.js'); //importing data.service.js file
 const app = express();                   //creating app using express module
 app.use(express.json());              //parsing json
+
+
+app.use(cors({
+    origin:'http://192.168.43.9:8080',      //url of client
+    credentials:true                             //for handling cookies from front end
+}))
 
 app.use(session ({                   //session creation in our application
     secret:'randomsecurestring',
@@ -44,7 +51,7 @@ app.post('/', (req, res) => {
     res.send("This is a POST method");
 });
 app.post('/register',(req,res)=>{
-    dataService.register(req.body.uname,req.body.accno,req.body.pswd)  //asychronus action
+    dataService.register(req.body.uname,req.body.acno,req.body.pswd)  //asychronus action
     .then(result=>{
         res.status(result.statusCode).json(result);
     })
@@ -52,7 +59,7 @@ app.post('/register',(req,res)=>{
 
 });
 app.post('/login',(req,res)=>{
-    dataService.login(req,req.body.accno,req.body.pswd) //asychronus action ..no semicolon at end
+    dataService.login(req,req.body.acno,req.body.pswd) //asychronus action ..no semicolon at end
     .then(result=>{
     res.status(result.statusCode).json(result);
 })
@@ -60,13 +67,13 @@ app.post('/login',(req,res)=>{
 
 app.post('/deposit',authMiddleware,(req,res)=>{
     console.log(req.session.currentUser);           //currentUser of login
-    dataService.deposit(req.body.accno,req.body.pswd,req.body.amount) //asychrons action
+    dataService.deposit(req.body.acno,req.body.pswd,req.body.amount) //asychrons action
     .then(result=>{
     res.status(result.statusCode).json(result);
     })
 });
 app.post('/withdraw',authMiddleware,(req,res)=>{
-    dataService.withdraw(req.body.accno,req.body.pswd,req.body.amount) //asychronus
+    dataService.withdraw(req,req.body.acno,req.body.pswd,req.body.amount) //asychronus
     .then(result=>{
         res.status(result.statusCode).json(result);
     })
@@ -87,6 +94,14 @@ app.patch('/', (req, res) => {
 app.delete('/', (req, res) => {
     res.send("This is a DELETE method");
 });
+
+//DELETE account
+app.delete('/deleteAccDetails/:acno',authMiddleware,(req, res) => {      
+    dataService.deleteAccDetails(req.params.acno) //pasing acno parmter
+    .then(result=>{
+    res.status(result.statusCode).json(result);
+})
+})
 
 
 

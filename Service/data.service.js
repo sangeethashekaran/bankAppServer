@@ -6,8 +6,6 @@ let accountDetails = {
   1003: { acno: 1003, actype: "current", username: "userfour", password: "userfour", balance: 6000 }
 }
 let curentUser;
-
-
 const register = (uname, acno, pswd) => {
   return db.User.findOne({ acno })
     .then(user => {
@@ -36,16 +34,18 @@ const register = (uname, acno, pswd) => {
 
 }
 
-const login = (req, accno, password) => {
+const login = (req,accno,password) => {
   var acno = parseInt(accno);
   return db.User.findOne({ acno, password })
     .then(user => {                              //user is result of above return statmnt
       if (user) {
-        req.session.currentUser = user; //current users account is assigned in sessions currentUser
+        req.session.currentUser = user.acno; //current users account is assigned in sessions currentUser
         return {
           statusCode: 200,
           status: true,
-          message: "login successful"
+          message: "login successful",
+          name:user.username,
+          acno:user.acno
         }
       }
       else {
@@ -84,7 +84,7 @@ const deposit = (acno, password, amt) => {
     })
 }
 
-const withdraw = (acno, password, amt) => {
+const withdraw = (req,acno,password,amt) => {
   var amount = parseInt(amt);
   return db.User.findOne({ acno, password })          //asychronus action
     .then(user => {                                       //for solving resolved state
@@ -93,6 +93,13 @@ const withdraw = (acno, password, amt) => {
           statusCode: 422,
           status: false,
           message: "Invalid Credentials"
+        }
+      }
+      if(req.session.currentUser != acno){
+        return {
+          statusCode: 422,
+          status: false,
+          message: "Permission denied"
         }
       }
       if (user.balance < amount) {
@@ -113,6 +120,27 @@ const withdraw = (acno, password, amt) => {
       }
     })
   }
+  const deleteAccDetails=(acno)=>{
+    return db.User.deleteOne({
+      acno:acno
+    })
+     .then(user=>{
+      if(!user){
+        return {
+          statusCode: 422,
+          status: false,
+          message: "Operation failed"
+        }
+      }
+      return {
+        statusCode: 200,
+        status: true,
+        message: "Account number " + acno + " is deleted successfully"
+      }
+
+    })
+
+  }
 
  
 
@@ -121,5 +149,6 @@ module.exports = {
   register,
   login,
   deposit,
-  withdraw
+  withdraw,
+  deleteAccDetails
 }
